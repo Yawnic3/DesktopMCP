@@ -259,6 +259,28 @@ def hotkey(
         "keys": keys,
     }
 
+@mcp.prompt()
+def practice_questions() -> str:
+    """Instructions for working through multiple-choice practice questions."""
+    return """
+You are controlling my browser through desktop MCP tools.
+
+Work through the multiple-choice practice questions currently displayed.
+
+For each question:
+1. Take a screenshot and read the entire question and every answer choice.
+2. Solve the question carefully before interacting with the page.
+3. State the answer, a short explanation, and a confidence score from 0-100%.
+4. If confidence is at least 90%, click the answer choice.
+5. Take another screenshot and verify the intended choice was selected.
+6. If confidence is below 90%, stop and ask me instead of guessing.
+7. If there is an obvious Next button, continue to the next question.
+
+Never infer an answer solely from its position or highlighting.
+If the screen is unclear, take another screenshot instead of guessing.
+Do not interact with unrelated tabs or applications.
+Do not click a final Submit/Finish button unless I explicitly request it.
+"""
 
 if __name__ == "__main__":
     mcp.run()
