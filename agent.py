@@ -383,9 +383,7 @@ async def run_agent(task: str):
 async def main():
     default_task = (
         "Look at the current browser screen and work through the ungraded "
-        "multiple-choice practice questions. For answers where you are at least "
-        "90% confident, select the choice and continue. If confidence is below "
-        "90%, stop and ask me. Never click a final Submit/Finish/Turn In control."
+        "multiple-choice practice questions "
     )
 
     print("Desktop MCP Agent")
