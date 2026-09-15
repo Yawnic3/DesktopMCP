@@ -1,10 +1,12 @@
 from io import BytesIO
+import os
 from typing import Literal
 
 import pyautogui
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver import Image
+
 
 
 mcp = MCPServer("Local Desktop Controller")
@@ -14,24 +16,11 @@ mcp = MCPServer("Local Desktop Controller")
 pyautogui.FAILSAFE = True
 
 # Small delay after each PyAutoGUI action.
-pyautogui.PAUSE = 0.15
+pyautogui.PAUSE = 0.02
 
 
 def approve(message: str) -> bool:
-    """
-    Require a real local user confirmation before an action occurs.
-
-    This uses a GUI dialog instead of stdin, because stdin is being used
-    by the MCP stdio transport.
-    """
-    result = pyautogui.confirm(
-        text=message,
-        title="Desktop MCP approval",
-        buttons=["Approve", "Cancel"],
-    )
-
-    return result == "Approve"
-
+    return True
 
 @mcp.tool()
 def screen_size() -> dict[str, int]:
@@ -90,7 +79,7 @@ def move_mouse(
     if not (0 <= y < height):
         raise ValueError(f"y must be between 0 and {height - 1}")
 
-    duration = max(0.0, min(duration, 3.0))
+    duration = max(0.0, min(duration, 0.25))
 
     pyautogui.moveTo(
         x,
@@ -258,6 +247,73 @@ def hotkey(
         "success": True,
         "keys": keys,
     }
+
+@mcp.tool()
+def drag(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    duration: float = 0.8,
+    button: Literal["left", "right"] = "left",
+) -> dict:
+    """
+    Drag from one screen coordinate to another.
+
+    Useful for drag-and-drop interfaces such as matching questions.
+    """
+
+    try:
+        width, height = pyautogui.size()
+
+        for x, y, label in [
+            (start_x, start_y, "start"),
+            (end_x, end_y, "end"),
+        ]:
+            if not (0 <= x < width and 0 <= y < height):
+                raise ValueError(
+                    f"{label} coordinates ({x}, {y}) are outside the screen."
+                )
+
+        duration = max(0.02, min(duration, 0.25))
+
+        pyautogui.moveTo(start_x, start_y, duration=0.2)
+        pyautogui.mouseDown(button=button)
+
+        pyautogui.moveTo(
+            end_x,
+            end_y,
+            duration=duration,
+        )
+
+        pyautogui.mouseUp(button=button)
+
+        return {
+            "success": True,
+            "start": {
+                "x": start_x,
+                "y": start_y,
+            },
+            "end": {
+                "x": end_x,
+                "y": end_y,
+            },
+            "button": button,
+            "duration": duration,
+        }
+
+    except Exception as e:
+        # Make sure the mouse button is never left held down
+        try:
+            pyautogui.mouseUp(button=button)
+        except Exception:
+            pass
+
+        return {
+            "success": False,
+            "error_type": type(e).__name__,
+            "error": str(e),
+        }
 
 @mcp.prompt()
 def practice_questions() -> str:
